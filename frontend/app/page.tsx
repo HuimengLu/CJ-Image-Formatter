@@ -15,7 +15,7 @@ import {
    CJ backdrop. (The pre-AI local pipeline lives on at /legacy.) The backend
    routes keep their historical /api/testing2 prefix.
 
-   Cover mode: Generate Cover classifies the product (gpt-4.1-mini) and
+   Cover mode: Generate Cover classifies the product (gpt-5.4) and
    composes it into that category's scene (gpt-image-2 + static/cover bg). The
    scene lands as an EXTRA filmstrip entry (variant "cover") sharing the same
    backend id as the white-plate entry; its "before" is the original photo.

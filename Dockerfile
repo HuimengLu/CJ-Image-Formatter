@@ -41,7 +41,6 @@ COPY --chown=user backend/ backend/
 # bitten us once (social2 + product_bg missing → Social 500s, wrong backdrop).
 COPY --chown=user static/ static/
 COPY --chown=user fonts/ fonts/
-COPY --chown=user bg_artwork.png .
 
 USER user
 

@@ -145,18 +145,6 @@ def load_product_bg():
     return None
 
 
-@functools.lru_cache(maxsize=1)
-def load_bg_image():
-    """Project background artwork (bg_artwork.png at repo root), or None."""
-    path = os.path.join(_BASE_DIR, "bg_artwork.png")
-    if not os.path.exists(path):
-        return None
-    try:
-        return ImageOps.exif_transpose(Image.open(path)).convert("RGBA")
-    except Exception:
-        return Image.open(path).convert("RGBA")
-
-
 # ── subject extraction ─────────────────────────────────────────────────────────
 
 def _extract_subject(pil_img: Image.Image):
@@ -928,8 +916,10 @@ def compose(result: Image.Image, subject_rgba, ratio: str,
     `orig_layer` (Original Background toggle) applies to the plain path only.
     """
     if text_mode:
+        # No artwork layer since bg_artwork.png was dropped — apply_text_overlay
+        # falls back to its rendered-text background on None.
         square, subject_bottom = apply_text_overlay(
-            result, subject_rgba, load_bg_image(), "1:1", caption)
+            result, subject_rgba, None, "1:1", caption)
         if caption.strip():
             square = add_description_text(square, caption.strip(), subject_bottom)
         return fit_to_ratio(square, ratio)
@@ -943,11 +933,11 @@ def compose(result: Image.Image, subject_rgba, ratio: str,
 _TESTING2_ZOOM = {"4:5": 1.2}
 
 # Cover mode: category → scene background in static/cover/. Explicit mapping —
-# the filenames don't follow a strict "<category> Background" rule (category 3
-# ships as just "Outdoor", and macOS stores the "/" in category 2 as ":").
+# the filenames don't follow a strict "<category> Background" rule (Building
+# Materials/Outdoor ships as just "Outdoor", since a "/" can't go in a filename).
 _COVER_BG = {
-    "Indoor Furniture": "Indoor Furniture Background.png",
-    "Large Electronics/Furniture": "Large Electronics:Furniture Background.png",
+    "Furniture": "Furniture Background.png",
+    "Appliances & Fixtures": "Appliances & Fixtures Background.png",
     "Building Materials/Outdoor": "Outdoor Background.png",
     "Lighting": "Lighting Background.png",
     "Specialty": "Specialty Background.png",

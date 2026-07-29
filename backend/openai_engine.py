@@ -73,12 +73,21 @@ PROMPT = (
 
 # ── Cover mode: category classification + scene composition ────────────────────
 
-CLASSIFY_MODEL = os.environ.get("CJ_OPENAI_CLASSIFY_MODEL", "gpt-4.1-mini")
+CLASSIFY_MODEL = os.environ.get("CJ_OPENAI_CLASSIFY_MODEL", "gpt-5.4")
+
+# GPT-5 and o-series reason before answering and bill those hidden tokens
+# against the completion budget, so the 4.1-era params (max_tokens=20,
+# temperature=0) would come back empty — and a non-default temperature is
+# rejected outright. Pick the param set from the model family so overriding
+# CJ_OPENAI_CLASSIFY_MODEL back to a 4.x model still works.
+_CLASSIFY_REASONS = not CLASSIFY_MODEL.startswith(("gpt-4", "gpt-3"))
+CLASSIFY_PARAMS = ({"max_completion_tokens": 512} if _CLASSIFY_REASONS
+                   else {"max_tokens": 20, "temperature": 0})
 
 # The five cover categories; classification must return exactly one of these.
 CATEGORIES = [
-    "Indoor Furniture",
-    "Large Electronics/Furniture",
+    "Furniture",
+    "Appliances & Fixtures",
     "Building Materials/Outdoor",
     "Lighting",
     "Specialty",
@@ -88,13 +97,14 @@ CLASSIFY_PROMPT = (
     "Identify the primary product shown in the image. Then answer with exactly "
     "one of the following category names and nothing else. Choose by the "
     "descriptions, not by the category names themselves:\n"
-    "Indoor Furniture — ALL ordinary home, office and commercial furniture: "
+    "Furniture — ALL ordinary indoor home, office and commercial furniture: "
     "chairs, tables, desks, sofas, beds, dressers, shelving, individual "
-    "cabinets and other cabinetry\n"
-    "Large Electronics/Furniture — ONLY appliances (refrigerator, stove, "
-    "washer, etc.), HVAC equipment, plumbing and bath fixtures (sink, tub, "
-    "toilet), and complete kitchen cabinet sets / casework. Never use this "
-    "category for ordinary furniture such as chairs or tables\n"
+    "cabinets and other cabinetry. Patio, garden and other outdoor furniture "
+    "does NOT belong here — put it in Building Materials/Outdoor\n"
+    "Appliances & Fixtures — ONLY appliances (refrigerator, stove, washer, "
+    "etc.), HVAC equipment, plumbing and bath fixtures (sink, tub, toilet), "
+    "and complete kitchen cabinet sets / casework. Never use this category for "
+    "ordinary furniture such as chairs or tables\n"
     "Building Materials/Outdoor — building materials and lumber, countertops, "
     "doors, garden and outdoor items, windows, shutters and skylights\n"
     "Lighting — lamps, light fixtures and ceiling fans\n"
@@ -219,7 +229,7 @@ def white_bg_with_shadow(pil_img: Image.Image) -> tuple[Image.Image | None, str 
 
 
 def classify_category(pil_img: Image.Image) -> str:
-    """Steps 1+2 of Cover mode in one gpt-4.1-mini vision call.
+    """Steps 1+2 of Cover mode in one CLASSIFY_MODEL vision call.
 
     Identifies the product and maps it to one of CATEGORIES; any failure
     (network, refusal, unparseable answer) falls back to "Specialty" so the
@@ -239,15 +249,36 @@ def classify_category(pil_img: Image.Image) -> str:
                 {"type": "image_url",
                  "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
             ]}],
-            max_tokens=20, temperature=0)
+            **CLASSIFY_PARAMS)
         answer = (resp.choices[0].message.content or "").strip().lower()
     except Exception as exc:
         log.warning("classify_category failed (%s) — using Specialty", exc)
         return "Specialty"
 
+    if not answer:
+        # Systematic, not per-image: the model spent its whole budget on
+        # reasoning tokens. Raise CLASSIFY_PARAMS rather than ignoring this —
+        # otherwise every cover silently lands on Specialty.
+        log.error("classify_category: empty answer from %s — using Specialty; "
+                  "completion budget is likely too small", CLASSIFY_MODEL)
+        return "Specialty"
+
+    answer = answer.strip(" .\"'*")
+
+    # Exact match first: "Furniture" is a substring of chatty answers about
+    # other categories ("appliance, not furniture"), so a plain containment
+    # check on a first-listed category would mis-bucket them.
     for cat in CATEGORIES:
-        if cat.lower() in answer:
+        if cat.lower() == answer:
             log.info("classify_category: %r -> %s", answer[:60], cat)
+            return cat
+    # Then both containment directions: the answer may wrap the name
+    # ("Category: Lighting"), or abbreviate a multi-word one — "Appliances"
+    # for "Appliances & Fixtures" — which the wrapping check alone would miss.
+    for cat in CATEGORIES:
+        low = cat.lower()
+        if low in answer or answer in low:
+            log.info("classify_category: %r -> %s (loose)", answer[:60], cat)
             return cat
     log.warning("classify_category: unrecognised answer %r — using Specialty",
                 answer[:60])

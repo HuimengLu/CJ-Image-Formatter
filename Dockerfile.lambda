@@ -28,7 +28,6 @@ WORKDIR /var/task
 COPY backend/ backend/
 COPY static/social/ static/social/
 COPY fonts/ fonts/
-COPY bg_artwork.png .
 COPY lambda_handler.py .
 
 # Bake the withoutbg weights into the image. opensource() downloads lazily on

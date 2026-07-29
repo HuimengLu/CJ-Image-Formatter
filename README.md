@@ -51,4 +51,3 @@ The two halves deploy independently:
 - `fonts/IBMPlexSerif-*.ttf`, `fonts/IBMPlexSans-Medium.ttf` — template
   typography (Plex Sans stands in for Helvetica Neue in the Secondary-1
   byline)
-- `bg_artwork.png` — text-overlay background artwork
