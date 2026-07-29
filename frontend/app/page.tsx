@@ -111,7 +111,13 @@ export default function ListingPage() {
             onChange={(e) => { startBatch(Array.from(e.target.files ?? [])); e.target.value = ""; }}
           />
         </div>
-        <div className="cj-drop-note">Got multiple photos? Upload them all. We&apos;ll process 3 at a time.</div>
+        {/* The second sentence wraps as a unit — a mid-phrase break on narrow
+            screens orphans "a time."; a hard <br> would force two lines even
+            where one fits. */}
+        <div className="cj-drop-note">
+          Got multiple photos? Upload them all.{" "}
+          <span className="cj-nowrap-unit">We&apos;ll process 3 at a time.</span>
+        </div>
         <StepsStrip current={dragover || dropHover ? 1 : 0} />
       </div>
     );

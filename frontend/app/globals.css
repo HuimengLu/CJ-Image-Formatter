@@ -657,9 +657,18 @@ body {
   .cj-top-item svg { width: 18px; height: 18px; flex: 0 0 auto; }
   .cj-top-item.active { color: var(--color-text); background: var(--alpha-08); }
   .cj-top-item:active { background: var(--alpha-12); }
-  .cj-top-legacy { padding: 0 8px; color: var(--color-text-secondary); }
   /* Fixed bar → push the app below it. */
   .cj-main { margin-left: 0; padding-top: calc(52px + env(safe-area-inset-top)); }
+}
+
+/* Narrow phones: with all labels shown the bar's intrinsic width is ~385px,
+   which overflows a 375px screen (and clips the Legacy icon). Only the
+   ACTIVE tab keeps its label — it doubles as the page title on mobile —
+   and the rest collapse to icons. Links carry aria-labels, so the hidden
+   text costs nothing for screen readers. */
+@media (max-width: 430px) {
+  .cj-top-item:not(.active) span { display: none; }
+  .cj-top-item:not(.active) { padding: 0 11px; }
 }
 
 /* ── Shared buttons (design-system solid / outline) ────────────────────────── */
@@ -802,6 +811,10 @@ body {
   font-size: var(--text-xs); color: var(--color-text-tertiary);
   text-align: center; margin-top: 12px;
 }
+/* Keeps a phrase together when the line wraps: inline-block wraps as a whole
+   unit instead of breaking mid-phrase (unlike nowrap, it can still wrap
+   internally if it ever exceeds the container). */
+.cj-nowrap-unit { display: inline-block; }
 
 .cj-strip {
   display: flex; justify-content: center; align-items: center; gap: 2.5rem;
@@ -1327,6 +1340,10 @@ body {
   position: relative; aspect-ratio: 1;
   border-right: 1px solid var(--color-border-subtle);
   border-bottom: 1px solid var(--color-border-subtle);
+  /* Double-click opens the detail view; without this the dblclick also starts
+     a native text selection, which spills onto the NEXT cell's <img> and
+     paints it with the blue ::selection highlight. */
+  user-select: none; -webkit-user-select: none;
 }
 .cj-lib-img {
   position: absolute; inset: 0; width: 100%; height: 100%;

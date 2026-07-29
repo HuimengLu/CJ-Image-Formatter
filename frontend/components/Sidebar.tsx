@@ -70,21 +70,17 @@ export default function Sidebar() {
             href={it.href}
             className={`cj-top-item${pathname === it.href ? " active" : ""}`}
             aria-current={pathname === it.href ? "page" : undefined}
+            // Keeps the accessible name when narrow screens hide the label.
+            aria-label={it.label === "New Listing" ? "Listing" : it.label}
             onClick={() => resetIfCurrent(it.href)}
           >
             {it.icon}
-            <span>{it.label === "New Listing" ? "Listing" : it.label}</span>
+            <span aria-hidden="true">{it.label === "New Listing" ? "Listing" : it.label}</span>
           </Link>
         ))}
-        <Link
-          href="/legacy"
-          className={`cj-top-item cj-top-legacy${pathname === "/legacy" ? " active" : ""}`}
-          aria-current={pathname === "/legacy" ? "page" : undefined}
-          aria-label="Legacy Listing"
-          onClick={() => resetIfCurrent("/legacy")}
-        >
-          <ArchiveIcon />
-        </Link>
+        {/* No Legacy entry here: it's an archived tool staff use at the desk,
+            and the mobile bar has no room for a muted archival link. /legacy
+            still works by URL on mobile. */}
       </nav>
     </>
   );
