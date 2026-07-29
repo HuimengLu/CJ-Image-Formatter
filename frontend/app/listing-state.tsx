@@ -35,6 +35,8 @@ export type Photo = {
   ratio: Ratio;
   dimensions: Dimension[];
   variant?: "cover";           // undefined = white-plate entry
+  gen?: number;                // cover generation stamp — cache-buster, since
+                               // remove+regenerate reuses the same (id, kind)
 };
 
 export type ProcRow = {
@@ -61,12 +63,12 @@ export const entryKey = (p: Photo) => `${p.id}:${p.variant ?? "after"}`;
 export const imgUrl = (p: Photo, slot: "after" | "before", w?: number) => {
   const kind = slot === "after" && p.variant === "cover" ? "cover" : slot;
   return `/api/testing2/${p.id}/image?kind=${kind}&ratio=${encodeURIComponent(p.ratio)}` +
-    (w ? `&w=${w}` : "");
+    (w ? `&w=${w}` : "") + (p.gen ? `&v=${p.gen}` : "");
 };
 
 export const thumbUrl = (p: Photo, s?: number) =>
   `/api/testing2/${p.id}/thumb?kind=${p.variant === "cover" ? "cover" : "after"}` +
-  (s ? `&s=${s}` : "");
+  (s ? `&s=${s}` : "") + (p.gen ? `&v=${p.gen}` : "");
 
 /* Batch uploads run through gpt-image-2 (~15-50s each), so process several in
    parallel. 3 workers balances total wall time against OpenAI's per-minute
@@ -360,6 +362,10 @@ function useListingState() {
     const id = photo.id;
     const existing = photos.findIndex((p) => p.id === id && p.variant === "cover");
     if (existing >= 0) {
+      // Destructive by design ("Removing a cover cannot be undone"): drop the
+      // server-side cache too, or the next Generate would silently return the
+      // same image from the POST route's cache instead of a fresh run.
+      fetch(`/api/testing2/${id}/cover`, { method: "DELETE" }).catch(() => {});
       setPhotos((ps) => ps.filter((_, j) => j !== existing));
       setActive((a) => {
         const base = photos.findIndex((p) => p.id === id && !p.variant);
@@ -381,7 +387,7 @@ function useListingState() {
         if (base < 0 || ps.some((p) => p.id === id && p.variant === "cover")) return ps;
         const entry: Photo = {
           id, name: `${ps[base].name} · cover`, ratio: ps[base].ratio,
-          dimensions: [], variant: "cover",
+          dimensions: [], variant: "cover", gen: Date.now(),
         };
         return [...ps.slice(0, base + 1), entry, ...ps.slice(base + 1)];
       });
@@ -433,16 +439,18 @@ function useListingState() {
 
   const undoRemove = useCallback(() => {
     if (undoTimer.current) { clearTimeout(undoTimer.current); undoTimer.current = null; }
-    setUndoDelete((pending) => {
-      if (pending) {
-        setPhotos((ps) => {
-          const idx = Math.min(pending.index, ps.length);
-          return [...ps.slice(0, idx), pending.entry, ...ps.slice(idx)];
-        });
-      }
-      return null;
+    const pending = undoDelete;
+    setUndoDelete(null);
+    if (!pending) return;
+    // setPhotos must not run inside the setUndoDelete updater: updaters must
+    // be pure, and StrictMode double-invokes them — the nested call inserted
+    // the entry twice. The duplicate guard also covers double-clicked Undo.
+    setPhotos((ps) => {
+      if (ps.some((p) => entryKey(p) === entryKey(pending.entry))) return ps;
+      const idx = Math.min(pending.index, ps.length);
+      return [...ps.slice(0, idx), pending.entry, ...ps.slice(idx)];
     });
-  }, []);
+  }, [undoDelete]);
 
   const exportSelected = useCallback(async () => {
     const items = photos

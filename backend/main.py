@@ -326,6 +326,20 @@ def testing2_cover(tid: str):
     return {"ok": True, "category": rec.get("cover_category")}
 
 
+@app.delete("/api/testing2/{tid}/cover")
+def testing2_cover_delete(tid: str):
+    """Drop the cached cover so Remove Cover is genuinely destructive.
+
+    The UI warns "Removing a cover cannot be undone" — without this, the POST
+    route's cache would hand the same image straight back. After this,
+    regenerating is a fresh billed run with a different result.
+    """
+    rec = _get_testing2(tid)
+    rec.pop("cover", None)
+    rec.pop("cover_category", None)
+    return {"ok": True}
+
+
 @app.get("/api/testing2/{tid}/thumb")
 def testing2_thumb(tid: str, s: int = 160, kind: str = "after"):
     rec = _get_testing2(tid)

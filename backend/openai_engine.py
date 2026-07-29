@@ -111,19 +111,114 @@ CLASSIFY_PROMPT = (
     "Specialty — special or uncommon items that fit none of the above"
 )
 
-COVER_PROMPT_WAREHOUSE = (
-    "Use the provided warehouse image only as a style and environment "
-    "reference. Preserve the product exactly as captured without changing its "
-    "geometry, color, texture, or perspective. Recreate the same industrial "
-    "warehouse corner, including the brick wall, white plaster wall, large "
-    "factory window, aged concrete floor, and natural daylight. Compose the "
-    "scene as a commercial product photograph. The product is the primary "
-    "subject. Adjust the framing so the product occupies roughly 50% of the "
-    "image height while still preserving enough warehouse context to establish "
-    "the environment. Crop naturally as a professional furniture catalog "
-    "would. Avoid excessive empty floor, wall, or ceiling. Maintain the same "
-    "camera angle, lighting direction, color temperature, and perspective "
-    "across every generation."
+# One prompt per category, each describing its actual backdrop image — a
+# mismatched description makes the model invent the missing elements. All
+# five share the same philosophy: place the product INTO the provided
+# backdrop and never repaint it (a "style reference / recreate" phrasing
+# regenerates the scene every time, so backgrounds drift between listings).
+# Sizing is visual-consistency (product ≈ 50% of image height) rather than
+# true physical scale, so "scale" is deliberately absent from the
+# preserve-exactly lists. Seam positions are "as provided", not numeric —
+# quoting a percentage invites the model to move the seam to match it.
+
+COVER_PROMPT_FURNITURE = (
+    "Remove the background from the product image and place the product into "
+    "the provided industrial studio backdrop. Preserve the product exactly as "
+    "captured without changing its geometry, perspective, color, texture, "
+    "materials, or proportions. Treat the plain white plaster wall, dark "
+    "baseboard, and smooth concrete floor as a permanent studio backdrop. "
+    "Never modify the background geometry, perspective, lighting, or "
+    "proportions. Keep the wall-floor seam exactly where it appears in the "
+    "provided backdrop; never move it. Use a fixed straight-on camera with a "
+    "constant focal length. Keep the camera height, viewing angle, framing, "
+    "and perspective identical across every generation. Scale and position "
+    "the product so it occupies approximately 50% of the image height, "
+    "centered horizontally and resting naturally on the floor. Illuminate "
+    "the product using one large soft studio light positioned at the "
+    "front-right (approximately 45° horizontally and 35° above the object). "
+    "Keep the lighting identical in every image. Blend the product naturally "
+    "into the environment by matching the scene's perspective, lighting "
+    "direction, color temperature, and floor plane. Generate one realistic "
+    "contact shadow extending diagonally toward the back-left, originating "
+    "from the object's contact points. The shadow should be soft, short, and "
+    "physically accurate. The final result should look like a professionally "
+    "photographed product placed in the same industrial studio set, not a "
+    "composited cutout."
+)
+
+COVER_PROMPT_APPLIANCES = (
+    "Remove the background from the product image and place the product into "
+    "the provided industrial warehouse corner. Preserve the product exactly "
+    "as captured without changing its geometry, perspective, color, texture, "
+    "materials, or proportions. Treat the warehouse corner — the red brick "
+    "wall with its large factory window on the left, the white plaster wall "
+    "on the right, the wooden ceiling beams, and the aged concrete floor — "
+    "as a permanent backdrop. Never modify the background geometry, "
+    "perspective, lighting, or proportions. Keep the wall-floor boundary "
+    "exactly where it appears in the provided backdrop; never move it. Use a "
+    "fixed camera with a constant focal length. Keep the camera height, "
+    "viewing angle, framing, and perspective identical across every "
+    "generation. Scale and position the product so it occupies approximately "
+    "50% of the image height and rests naturally on the floor. Illuminate "
+    "the product with the soft natural daylight coming through the factory "
+    "window on the left. Keep the lighting identical in every image. Blend "
+    "the product naturally into the environment by matching the scene's "
+    "perspective, lighting direction, color temperature, and floor plane. "
+    "Generate one realistic contact shadow consistent with the window light, "
+    "extending gently away from the window, originating from the object's "
+    "contact points. The shadow should be soft, short, and physically "
+    "accurate. The final result should look like a professionally "
+    "photographed product placed in the same warehouse corner, not a "
+    "composited cutout."
+)
+
+COVER_PROMPT_OUTDOOR = (
+    "Remove the background from the product image and place the product into "
+    "the provided outdoor backdrop. Preserve the product exactly as captured "
+    "without changing its geometry, perspective, color, texture, materials, "
+    "or proportions. Treat the sunlit red brick wall with its dappled tree "
+    "shadows and the herringbone brick-paved ground as a permanent backdrop. "
+    "Never modify the background geometry, perspective, lighting, or "
+    "proportions. Keep the wall-ground seam exactly where it appears in the "
+    "provided backdrop; never move it. Use a fixed straight-on camera with a "
+    "constant focal length. Keep the camera height, viewing angle, framing, "
+    "and perspective identical across every generation. Scale and position "
+    "the product so it occupies approximately 50% of the image height, "
+    "centered horizontally and resting naturally on the ground. Illuminate "
+    "the product with the scene's warm natural daylight. Keep the lighting "
+    "identical in every image. Blend the product naturally into the "
+    "environment by matching the scene's perspective, lighting direction, "
+    "color temperature, and ground plane. Generate one realistic contact "
+    "shadow consistent with the scene's daylight, originating from the "
+    "object's contact points. The shadow should be soft, short, and "
+    "physically accurate. The final result should look like a professionally "
+    "photographed product placed in the same outdoor set, not a composited "
+    "cutout."
+)
+
+COVER_PROMPT_SPECIALTY = (
+    "Remove the background from the product image and place the product into "
+    "the provided industrial studio backdrop. Preserve the product exactly as "
+    "captured without changing its geometry, perspective, color, texture, "
+    "materials, or proportions. Treat the red brick wall, dark baseboard, "
+    "and smooth concrete floor as a permanent studio backdrop. Never modify "
+    "the background geometry, perspective, lighting, or proportions. Keep "
+    "the wall-floor seam exactly where it appears in the provided backdrop; "
+    "never move it. Use a fixed straight-on camera with a constant focal "
+    "length. Keep the camera height, viewing angle, framing, and perspective "
+    "identical across every generation. Scale and position the product so it "
+    "occupies approximately 50% of the image height, centered horizontally "
+    "and resting naturally on the floor. Illuminate the product using one "
+    "large soft studio light positioned at the front-right (approximately "
+    "45° horizontally and 35° above the object). Keep the lighting identical "
+    "in every image. Blend the product naturally into the environment by "
+    "matching the scene's perspective, lighting direction, color "
+    "temperature, and floor plane. Generate one realistic contact shadow "
+    "extending diagonally toward the back-left, originating from the "
+    "object's contact points. The shadow should be soft, short, and "
+    "physically accurate. The final result should look like a professionally "
+    "photographed product placed in the same industrial studio set, not a "
+    "composited cutout."
 )
 
 COVER_PROMPT_LIGHTING = (
@@ -145,6 +240,16 @@ COVER_PROMPT_LIGHTING = (
     "lifestyle product photograph, with the lamp remaining the visual focus "
     "while integrating naturally into the environment."
 )
+
+# Category → prompt. Keys must stay in sync with CATEGORIES; Specialty is the
+# fallback for anything unmapped, mirroring classify_category's fallback.
+COVER_PROMPTS = {
+    "Furniture": COVER_PROMPT_FURNITURE,
+    "Appliances & Fixtures": COVER_PROMPT_APPLIANCES,
+    "Building Materials/Outdoor": COVER_PROMPT_OUTDOOR,
+    "Lighting": COVER_PROMPT_LIGHTING,
+    "Specialty": COVER_PROMPT_SPECIALTY,
+}
 
 _client: OpenAI | None = None
 
@@ -290,11 +395,11 @@ def cover_scene(product_img: Image.Image, bg_img: Image.Image,
     """Step 3 of Cover mode: compose the product into the category scene.
 
     Sends [product, background] to gpt-image-2 — product first so it is the
-    edit subject, background second as the style/environment reference — with
-    the warehouse prompt (or the Lighting-specific one). Returns
-    (scene_rgb, warn); same retry/backoff behaviour as white_bg_with_shadow.
+    edit subject, background second as the scene to place it into — with the
+    category's own prompt from COVER_PROMPTS. Returns (scene_rgb, warn); same
+    retry/backoff behaviour as white_bg_with_shadow.
     """
-    prompt = COVER_PROMPT_LIGHTING if category == "Lighting" else COVER_PROMPT_WAREHOUSE
+    prompt = COVER_PROMPTS.get(category, COVER_PROMPT_SPECIALTY)
 
     bufs = [_png_buf(product_img, "product.png"),
             _png_buf(bg_img, "background.png")]

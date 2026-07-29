@@ -313,7 +313,9 @@ export default function ListingPage() {
               <p className="cj-hint" role="status">
                 {busy
                   ? "Hang tight! Your cover will appear below in about 20–40 seconds."
-                  : "Adding a cover usually takes 20–40 seconds."}
+                  : coverOn
+                    ? "Removing a cover cannot be undone."
+                    : "Adding a cover usually takes 20–40 seconds. Use only for featured items."}
               </p>
             </div>
           </div>
